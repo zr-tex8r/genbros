@@ -1,0 +1,257 @@
+%%
+%% This is file 'genbros.sty'.
+%%
+%% Copyright (c) 2021 Takayuki YATO (aka. "ZR")
+%%   GitHub:   https://github.com/zr-tex8r
+%%   Twitter:  @zr_tex8r
+%%
+%% This package is distributed under the MIT License.
+%%
+
+%% package declaration
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{genbros}[2021/12/31 v0.2]
+
+%% preparation
+\def\bxfgb@pkgname{genbros}
+\providecommand\bxDebug[1]{}
+
+%--------------------------------------- general
+
+%% packages
+\RequirePackage{iftex,ifptex,ifpdf}
+\RequirePackage{keyval}
+
+%% variables
+\newif\ifbxfgb@dvipdfmx
+
+%% \bxfgb@family
+\def\bxfgb@family{genbros}
+%% \bxfgb@jfamily
+\def\bxfgb@jfamily{jgenbros}
+
+%% \bxfgb@font@file@name
+\def\bxfgb@font@file@name{GenEiBrice.otf}
+
+%% \bxfgb@decl@shape
+\@onlypreamble\bxfgb@decl@shape
+\def\bxfgb@decl@shape#1#2#3{%
+  \DeclareFontShape{\bxfgb@enc}{\bxfgb@family}{#1}{#2}{#3}{}}
+
+%% \bxfgb@mode
+\chardef\bxfgb@mode=0
+\ifpdf \chardef\bxfgb@mode=1 \fi
+\ifLuaTeX \chardef\bxfgb@mode=3 \fi
+\ifXeTeX \chardef\bxfgb@mode=3 \fi
+
+%% \bxfgb@ptex
+\chardef\bxfgb@ptex=0
+\ifptex \chardef\bxfgb@ptex=1 \fi
+\ifuptex \chardef\bxfgb@ptex=2 \fi
+
+%--------------------------------------- options
+
+%% \bxfgb@skscale
+\def\bxfgb@skscale{0.5}
+
+%% driver options
+\DeclareOption{dvipdfmx}{%
+  \bxfgb@dvipdfmxtrue}
+\DeclareOption{dvips}{%
+  \bxfgb@dvipdfmxfalse}
+\DeclareOption{dviout}{%
+  \bxfgb@dvipdfmxfalse}
+\DeclareOption{xdvi}{%
+  \bxfgb@dvipdfmxfalse}
+\DeclareOption{nodvidriver}{%
+  \bxfgb@dvipdfmxfalse}
+%% key-value
+\DeclareOption*{%
+  \edef\bxfgb@tmpa{\noexpand\setkeys{bxfgb}{\CurrentOption}%
+  }\bxfgb@tmpa}
+% skscale=<real>
+\define@key{bxfgb}{skscale}{%
+  \edef\bxfgb@skscale{#1}}
+%% dispatch
+\ProcessOptions*
+
+%% check environment
+\ifbxfgb@dvipdfmx
+  \ifnum\bxfgb@mode=0
+    \chardef\bxfgb@mode=2
+  \else
+    \PackageError\bxfgb@pkgname
+     {Option 'dvipdfmx' given on wrong engine}
+     {\@ehc}
+    \bxfgb@dvipdfmxfalse
+  \fi
+\fi
+\ifnum\bxfgb@mode=0
+  \PackageError\bxfgb@pkgname
+   {Unsupported settings.\MessageBreak
+    Note: if you're using dvipdfmx, then you must set\MessageBreak
+    'dvipdfmx' option}
+   {Package loading will be aborted.\MessageBreak\@ehc}
+\expandafter\endinput\fi\relax
+% pdfTeX (in PDF mode) does not supported CID-keyed fonts.
+\ifnum\bxfgb@mode=1
+  \PackageError\bxfgb@pkgname
+   {pdfLaTeX is unsupported}
+   {Package loading will be aborted.\MessageBreak\@ehc}
+\expandafter\endinput\fi\relax
+%% ;-)
+\ifnum\bxfgb@mode=3
+  \PackageError\bxfgb@pkgname
+   {XeLaTeX/LuaLaTeX is not YET supported}
+   {Package loading will be aborted.\MessageBreak\@ehc}
+\expandafter\endinput\fi\relax
+
+%--------------------------------------- user interface
+
+%%<*> \genbrossetup
+\DeclareRobustCommand*{\genbrossetup}[1]{%
+  \setkeys{bxfgb}{#1}}
+\define@key{bxfgb}{skscale}{%
+  \bxfgb@reset@skscale{#1}}
+
+%%<*> \genbrosfamily
+\ifnum\bxfgb@ptex=0
+  \DeclareRobustCommand*{\genbrosfamily}{%
+    \not@math@alphabet\genbrosfamily\relax
+    \fontfamily{\bxfgb@family}\selectfont}
+  \DeclareTextFontCommand{\bxfgb@text@cmd}{\genbrosfamily}
+\else
+  \DeclareRobustCommand*{\genbrosfamily}{%
+    \not@math@alphabet\genbrosfamily\relax
+    \romanfamily{\bxfgb@family}\kanjifamily{\bxfgb@jfamily}%
+    \selectfont}
+  \DeclareTextFontCommand{\bxfgb@text@cmd}{\genbrosfamily}
+  \def\bxfgb@sk@family{%
+    \not@math@alphabet\genbrosfamily\relax
+    \romanfamily{\bxfgb@family}\kanjifamily{sk\bxfgb@jfamily}%
+    \selectfont}
+  \DeclareTextFontCommand{\bxfgb@sk@text@cmd}{\bxfgb@sk@family}
+\fi
+%%<*> \genbros
+\ifnum\bxfgb@ptex=0
+  \DeclareRobustCommand*{\genbros}{%
+    \@ifstar{\bxfgb@genbros\bxfgb@text@cmd}%
+      {\bxfgb@genbros\bxfgb@text@cmd}}
+  \def\bxfgb@genbros#1#2{%
+    \mbox{#1{#2}}}
+\else
+  \DeclareRobustCommand*{\genbros}{%
+    \@ifstar{\bxfgb@genbros\bxfgb@sk@text@cmd}%
+      {\bxfgb@genbros\bxfgb@text@cmd}}
+  \def\bxfgb@genbros#1#2{%
+    \mbox{\kanjiskip\z@skip\xkanjiskip\z@skip
+      #1{#2}}}
+\fi
+
+%--------------------------------------- font declaration (legacy)
+\ifnum\bxfgb@mode<3
+
+%% font family 'genbros'
+\@for\bxfgb@enc:={OT1,T1,LY1,TS1}\do{%
+  \expandafter\ifx\csname T@\bxfgb@enc\endcsname\relax\else
+    \def\bxfgb@tmpa#1\relax{\lowercase{\def\bxfgb@tmpa{#1}}}%
+    \expandafter\bxfgb@tmpa\bxfgb@enc\relax
+    \DeclareFontFamily{\bxfgb@enc}{\bxfgb@family}{}%
+    \bxfgb@decl@shape{m}{n}{<->\bxfgb@family-r-\bxfgb@tmpa}%
+    \bxfgb@decl@shape{b}{n}{<->ssub*\bxfgb@family/m/n}%
+    \bxfgb@decl@shape{bx}{n}{<->ssub*\bxfgb@family/m/n}%
+  \fi}
+
+%% font family 'ugenbros'
+\DeclareFontFamily{U}{u\bxfgb@family}{}
+\DeclareFontShape{U}{u\bxfgb@family}{m}{n}%
+  {<->\bxfgb@family-r-ly1}{}
+
+%% \bxfgb@set@jencoding{<encoding>}
+\@onlypreamble\bxfgb@set@jencoding
+\def\bxfgb@set@jencoding#1#2{%
+  \edef\bxfgb@jencoding{#1}%
+  \edef\bxfgb@tencoding{#2}%
+  \lowercase{\edef\bxfgb@jfm{\bxfgb@family-r-#1}}%
+  \edef\bxfgb@redecl@sk@shape{%
+    \noexpand\DeclareFontShape{\bxfgb@jencoding}{sk\bxfgb@jfamily}%
+      {m}{n}{<->s*[\noexpand\bxfgb@skscale]\bxfgb@jfm}{}}}
+%% \bxfgb@decl@jfamily{<family>}{<scale>}
+\@onlypreamble\bxfgb@decl@jfamily
+\def\bxfgb@decl@jfamily#1#2{%
+  \begingroup
+    \let\bxfgb@enc\bxfgb@jencoding \edef\bxfgb@family{#1}%
+    \let\bxfgb@check\relax
+    \def\bxfgb@tmpa##1\relax{\lowercase{\def\bxfgb@tmpa{##1}}}%
+    \expandafter\bxfgb@tmpa\bxfgb@enc\relax
+    \DeclareKanjiFamily{\bxfgb@enc}{\bxfgb@family}{\bxfgb@check{#1}}%
+    \bxfgb@decl@shape{m}{n}{<->s*[#2]\bxfgb@jfm}%
+    \bxfgb@decl@shape{b}{n}{<->ssub*\bxfgb@family/m/n}%
+    \bxfgb@decl@shape{bx}{n}{<->ssub*\bxfgb@family/m/n}%
+    \let\bxfgb@enc\bxfgb@tencoding
+    \DeclareKanjiFamily{\bxfgb@enc}{\bxfgb@family}{}%
+    \bxfgb@decl@shape{m}{n}{<->ssub*\mcdefault/m/n}%
+    \bxfgb@decl@shape{b}{n}{<->ssub*\bxfgb@family/m/n}%
+    \bxfgb@decl@shape{bx}{n}{<->ssub*\bxfgb@family/m/n}%
+  \endgroup}
+
+%% kanji font family 'jgenbros'/'pjgenbros'
+\ifnum\bxfgb@ptex=1
+  \bxfgb@set@jencoding{JY1}{JT1}
+  \bxfgb@decl@jfamily{\bxfgb@jfamily}{1}
+  \bxfgb@decl@jfamily{sk\bxfgb@jfamily}{\bxfgb@skscale}
+\else\ifnum\bxfgb@ptex=2
+  \bxfgb@set@jencoding{JY2}{JT2}
+  \bxfgb@decl@jfamily{\bxfgb@jfamily}{1}
+  \bxfgb@decl@jfamily{sk\bxfgb@jfamily}{\bxfgb@skscale}
+\fi\fi
+
+%% \bxfgb@reset@skscale{<scale>}
+\def\bxfgb@reset@skscale#1{%
+  \xdef\bxfgb@skscale{#1}%
+  \bxfgb@redecl@sk@shape}
+\def\bxfgb@reset@skscale@@disabled#1{%
+  \PackageError\bxfgb@pkgname
+   {You cannot change the skscale value any longer}%
+   {\@eha}}
+\AtBeginDocument{%
+  \let\bxfgb@reset@skscale\bxfgb@reset@skscale@@disabled}
+
+%% \bxfgb@check{<family>}
+\def\bxfgb@check#1{%
+  \@nameuse{bxfgb@check/#1}}
+\@namedef{bxfgb@check/sk\bxfgb@jfamily}{%
+  \global\let\bxfgb@reset@skscale\bxfgb@reset@skscale@@disabled}
+
+%% font map settings
+\ifnum\bxfgb@mode=1
+  \pdfmapline{+r-\bxfgb@family-r-u@Unicode <\bxfgb@font@file@name}
+\else\ifnum\bxfgb@mode=2
+  \AtBeginDvi{\special{pdf:mapline
+    r-\bxfgb@family-r-u@Unicode@ unicode \bxfgb@font@file@name}}
+  \ifnum\bxfgb@ptex>0
+    \AtBeginDvi{\special{pdf:mapline
+      r-\bxfgb@family-r-jy2 unicode \bxfgb@font@file@name}}
+  \fi
+\fi\fi
+
+\fi
+%--------------------------------------- font declaration (Unicode)
+\ifnum\bxfgb@mode=3
+
+\def\bxfgb@enc{TU}
+\expandafter\ifx\csname T@\bxfgb@enc\endcsname\relax
+  \edef\bxfgb@enc{\ifLuaTeX EU2\else EU1\fi}
+\fi
+
+%% font family 'genbros'
+\bxfgb@decl@shape{m}{n}{<->%
+  \ifLuaTeX file:\bxfgb@font@file@name:script=latn;+trep;+tlig;%
+  \else     "[\bxfgb@font@file@name]:mapping=tex-text"%
+  \fi}
+\bxfgb@decl@shape{b}{n}{<->ssub*\bxfgb@family/m/n}{}%
+\bxfgb@decl@shape{bx}{n}{<->ssub*\bxfgb@family/m/n}{}%
+
+\fi
+%--------------------------------------- done
+\endinput
